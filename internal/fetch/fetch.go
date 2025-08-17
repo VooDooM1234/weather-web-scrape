@@ -1,11 +1,9 @@
 ﻿package fetch
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -66,15 +64,12 @@ type WeatherView struct {
 }
 
 type FetchData struct {
-	Scheme   string
-	Host     string
-	Port     string
-	EndPoint string
-
-	Data WeatherResponse
+	Scheme string
+	Host   string
+	Port   int
 }
 
-type WeatherLocation struct {
+type WeatherDataLocation struct {
 	Name           string  `json:"name"`
 	Region         string  `json:"region"`
 	Country        string  `json:"country"`
@@ -85,7 +80,7 @@ type WeatherLocation struct {
 	Localtime      string  `json:"localtime"`
 }
 
-type WeatherCurrent struct {
+type WeatherDataCurrent struct {
 	LastUpdatedEpoch int64   `json:"last_updated_epoch"`
 	LastUpdated      string  `json:"last_updated"`
 	TempC            float64 `json:"temp_c"`
@@ -125,13 +120,13 @@ type WeatherCurrent struct {
 }
 
 type WeatherResponseFlat struct {
-	Location WeatherLocation `json:"location"`
-	Current  WeatherCurrent  `json:"current"`
+	Location WeatherDataLocation `json:"location"`
+	Current  WeatherDataCurrent  `json:"current"`
 }
 
 func FlattenWeather(orig *WeatherResponse) WeatherResponseFlat {
 	return WeatherResponseFlat{
-		Location: WeatherLocation{
+		Location: WeatherDataLocation{
 			Name:           orig.Location.Name,
 			Region:         orig.Location.Region,
 			Country:        orig.Location.Country,
@@ -141,7 +136,7 @@ func FlattenWeather(orig *WeatherResponse) WeatherResponseFlat {
 			LocaltimeEpoch: orig.Location.LocaltimeEpoch,
 			Localtime:      orig.Location.Localtime,
 		},
-		Current: WeatherCurrent{
+		Current: WeatherDataCurrent{
 			LastUpdatedEpoch: orig.Current.LastUpdatedEpoch,
 			LastUpdated:      orig.Current.LastUpdated,
 			TempC:            orig.Current.TempC,
@@ -182,6 +177,15 @@ func FlattenWeather(orig *WeatherResponse) WeatherResponseFlat {
 	}
 }
 
+type WeatherLocationSearch struct {
+	ID      int     `json:"id"`
+	Name    string  `json:"name"`
+	Region  string  `json:"region"`
+	Country string  `json:"country"`
+	Lat     float64 `json:"lat"`
+	Lon     float64 `json:"lon"`
+}
+
 func WeatherLabels() map[string]string {
 	return map[string]string{
 		"last_updated_epoch": "Last Updated (Epoch)",
@@ -216,46 +220,51 @@ func WeatherLabels() map[string]string {
 	}
 }
 
-func NewFetch(host, endPoint string) *FetchData {
+func NewFetchWeather(scheme, host string, port int) *FetchData {
 	return &FetchData{
-		Scheme:   "https",
-		Host:     host,
-		EndPoint: endPoint,
+		Scheme: scheme,
+		Host:   host,
+		Port:   port,
 	}
 }
 
-func (f *FetchData) FetchWeather(apiKey, qParam string) WeatherResponse {
-	var data WeatherResponse
-
-	url := fmt.Sprintf("%s://%s%s?key=%s&q=%s", f.Scheme, f.Host, f.EndPoint, apiKey, qParam)
-	fmt.Println("Fetching:", url)
+func (f *FetchData) Fetch(endpoint, apiKey, qParam string, v interface{}) error {
+	url := fmt.Sprintf("%s://%s%s?key=%s&q=%s", f.Scheme, f.Host, endpoint, apiKey, qParam)
+	safeURL := fmt.Sprintf("%s://%s%s?q=%s", f.Scheme, f.Host, endpoint, qParam)
+	fmt.Println("Fetching:", safeURL)
 
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Fatalf("HTTP request error: %v", err)
+		return fmt.Errorf("HTTP request error: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("Error reading response body: %v", err)
+		return fmt.Errorf("error reading response body: %w", err)
 	}
 
 	if resp.StatusCode > 299 {
-		log.Fatalf("Response failed with status %d\nBody: %s\n", resp.StatusCode, string(body))
+		return fmt.Errorf("response failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
-	if err := json.Unmarshal(body, &data); err != nil {
-		log.Fatalf("JSON decode error: %v\nBody: %s", err, string(body))
+	if err := json.Unmarshal(body, v); err != nil {
+		return fmt.Errorf("JSON decode error: %w\nBody: %s", err, string(body))
 	}
 
-	var prettyJSON bytes.Buffer
-	error := json.Indent(&prettyJSON, body, "", "\t")
-	if error != nil {
-		log.Println("JSON parse error: ", error)
-	}
+	return nil
+}
 
-	log.Println("Weather Data:", prettyJSON.String())
+// API call to /v1/current.json endpoint
+func (f *FetchData) FetchWeatherCurrent(apiKey, qParam string) (WeatherResponse, error) {
+	var data WeatherResponse
+	err := f.Fetch("/v1/current.json", apiKey, qParam, &data)
+	return data, err
+}
 
-	return data
+// API call to /v1/search.json endpoint
+func (f *FetchData) FetchWeatherSearch(apiKey, qParam string) ([]WeatherLocationSearch, error) {
+	var data []WeatherLocationSearch
+	err := f.Fetch("/v1/search.json", apiKey, qParam, &data)
+	return data, err
 }
