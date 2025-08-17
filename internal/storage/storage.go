@@ -1,3 +1,3 @@
 ﻿package storage
 
-// Add your storage (DB or cache) code here
+// try adding an sql datbase to track history or something

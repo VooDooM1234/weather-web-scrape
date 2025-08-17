@@ -1,5 +1,7 @@
 package main
 
+//add weather stuff in here in clean up
+
 // import (
 // 	"net/http"
 // 	"text/template"

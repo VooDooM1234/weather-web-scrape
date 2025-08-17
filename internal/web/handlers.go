@@ -1,5 +1,3 @@
 ﻿package web
 
-// import "net/http"
-
-// Add your HTTP handlers here
+// one day Ill put the handlers in here
