@@ -1,5 +1,5 @@
 _config.yaml
 _*
-tmp/
+/tmp/
 .env
 .vscode
