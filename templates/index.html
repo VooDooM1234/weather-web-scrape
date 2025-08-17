@@ -20,7 +20,7 @@
         type="button"
         data-bs-toggle="dropdown"
       >
-        Select Unit
+        {{.TempUnit}}
       </button>
       <ul class="dropdown-menu">
         <li>
@@ -53,12 +53,12 @@
       <div class="row mb-3">
         <div class="col">
           <div class="stat-box">
-            <strong>Country</strong><br />{{.Location.Country}}
+            <strong>Country</strong><br />{{.Data.Location.Country}}
           </div>
         </div>
         <div class="col">
           <div class="stat-box">
-            <strong>City</strong><br />{{.Location.Name}}
+            <strong>City</strong><br />{{.Data.Location.Name}}
           </div>
         </div>
       </div>
@@ -69,21 +69,21 @@
       <div class="col">
         <div class="stat-box">
           <strong>Temperature</strong><br />
-          {{ if eq .TempUnit "imperial" }} {{ .Current.TempF }} °F {{ else }} {{
-          .Current.TempC }} °C {{ end }}
+          {{ if eq .TempUnit "imperial" }} {{ .Data.Current.TempF }} °F {{ else }} {{
+          .Data.Current.TempC }} °C {{ end }}
         </div>
       </div>
       <div class="col">
         <div class="stat-box">
           <strong>Feels Like</strong><br />
-          {{ if eq .TempUnit "imperial" }} {{ .Current.FeelsLikeF }} °F {{ else
-          }} {{ .Current.FeelsLikeC }} °C {{ end }}
+          {{ if eq .TempUnit "imperial" }} {{ .Data.Current.FeelsLikeF }} °F {{ else
+          }} {{ .Data.Current.FeelsLikeC }} °C {{ end }}
         </div>
       </div>
       <div class="col">
         <div class="stat-box">
           <strong>Humidity</strong><br />
-          {{ .Current.Humidity }}%
+          {{ .Data.Current.Humidity }}%
         </div>
       </div>
     </div>

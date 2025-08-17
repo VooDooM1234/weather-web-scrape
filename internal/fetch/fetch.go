@@ -9,6 +9,7 @@ import (
 	"net/http"
 )
 
+// API weather response structure
 type WeatherResponse struct {
 	Location struct {
 		Name           string  `json:"name"`
@@ -56,38 +57,12 @@ type WeatherResponse struct {
 		GustMph    float64 `json:"gust_mph"`
 		GustKph    float64 `json:"gust_kph"`
 	} `json:"current"`
-
-	TempUnit string
 }
 
-type WeatherCurrentView struct {
-	LastUpdated string
-	TempC       float64
-	TempF       float64
-	IsDay       int
-	WindMph     float64
-	WindKph     float64
-	WindDegree  int
-	WindDir     string
-	PressureMb  float64
-	PressureIn  float64
-	PrecipMm    float64
-	PrecipIn    float64
-	Humidity    int
-	Cloud       int
-	FeelsLikeC  float64
-	FeelsLikeF  float64
-	WindChillC  float64
-	WindChillF  float64
-	HeatIndexC  float64
-	HeatIndexF  float64
-	DewPointC   float64
-	DewPointF   float64
-	VisKm       float64
-	VisMiles    float64
-	UV          float64
-	GustMph     float64
-	GustKph     float64
+// Struct for rendering weather data view in html template
+type WeatherView struct {
+	Data     WeatherResponse
+	TempUnit string
 }
 
 type FetchData struct {
@@ -99,77 +74,145 @@ type FetchData struct {
 	Data WeatherResponse
 }
 
-func NewWeatherCurrentView(data WeatherResponse) WeatherCurrentView {
-	return WeatherCurrentView{
-		LastUpdated: data.Current.LastUpdated,
-		TempC:       data.Current.TempC,
-		TempF:       data.Current.TempF,
-		IsDay:       data.Current.IsDay,
-		WindMph:     data.Current.WindMph,
-		WindKph:     data.Current.WindKph,
-		WindDegree:  data.Current.WindDegree,
-		WindDir:     data.Current.WindDir,
-		PressureMb:  data.Current.PressureMb,
-		PressureIn:  data.Current.PressureIn,
-		PrecipMm:    data.Current.PrecipMm,
-		PrecipIn:    data.Current.PrecipIn,
-		Humidity:    data.Current.Humidity,
-		Cloud:       data.Current.Cloud,
-		FeelsLikeC:  data.Current.FeelsLikeC,
-		FeelsLikeF:  data.Current.FeelsLikeF,
-		WindChillC:  data.Current.WindChillC,
-		WindChillF:  data.Current.WindChillF,
-		HeatIndexC:  data.Current.HeatIndexC,
-		HeatIndexF:  data.Current.HeatIndexF,
-		DewPointC:   data.Current.DewPointC,
-		DewPointF:   data.Current.DewPointF,
-		VisKm:       data.Current.VisKm,
-		VisMiles:    data.Current.VisMiles,
-		UV:          data.Current.UV,
-		GustMph:     data.Current.GustMph,
-		GustKph:     data.Current.GustKph,
+type WeatherLocation struct {
+	Name           string  `json:"name"`
+	Region         string  `json:"region"`
+	Country        string  `json:"country"`
+	Lat            float64 `json:"lat"`
+	Lon            float64 `json:"lon"`
+	TzID           string  `json:"tz_id"`
+	LocaltimeEpoch int64   `json:"localtime_epoch"`
+	Localtime      string  `json:"localtime"`
+}
+
+type WeatherCurrent struct {
+	LastUpdatedEpoch int64   `json:"last_updated_epoch"`
+	LastUpdated      string  `json:"last_updated"`
+	TempC            float64 `json:"temp_c"`
+	TempF            float64 `json:"temp_f"`
+	IsDay            int     `json:"is_day"`
+
+	ConditionText string `json:"condition_text"`
+	ConditionIcon string `json:"condition_icon"`
+	ConditionCode int    `json:"condition_code"`
+
+	WindMph    float64 `json:"wind_mph"`
+	WindKph    float64 `json:"wind_kph"`
+	WindDegree int     `json:"wind_degree"`
+	WindDir    string  `json:"wind_dir"`
+
+	PressureMb float64 `json:"pressure_mb"`
+	PressureIn float64 `json:"pressure_in"`
+	PrecipMm   float64 `json:"precip_mm"`
+	PrecipIn   float64 `json:"precip_in"`
+
+	Humidity   int     `json:"humidity"`
+	Cloud      int     `json:"cloud"`
+	FeelsLikeC float64 `json:"feelslike_c"`
+	FeelsLikeF float64 `json:"feelslike_f"`
+	WindChillC float64 `json:"windchill_c"`
+	WindChillF float64 `json:"windchill_f"`
+	HeatIndexC float64 `json:"heatindex_c"`
+	HeatIndexF float64 `json:"heatindex_f"`
+	DewPointC  float64 `json:"dewpoint_c"`
+	DewPointF  float64 `json:"dewpoint_f"`
+
+	VisKm    float64 `json:"vis_km"`
+	VisMiles float64 `json:"vis_miles"`
+	UV       float64 `json:"uv"`
+	GustMph  float64 `json:"gust_mph"`
+	GustKph  float64 `json:"gust_kph"`
+}
+
+type WeatherResponseFlat struct {
+	Location WeatherLocation `json:"location"`
+	Current  WeatherCurrent  `json:"current"`
+}
+
+func FlattenWeather(orig *WeatherResponse) WeatherResponseFlat {
+	return WeatherResponseFlat{
+		Location: WeatherLocation{
+			Name:           orig.Location.Name,
+			Region:         orig.Location.Region,
+			Country:        orig.Location.Country,
+			Lat:            orig.Location.Lat,
+			Lon:            orig.Location.Lon,
+			TzID:           orig.Location.TzID,
+			LocaltimeEpoch: orig.Location.LocaltimeEpoch,
+			Localtime:      orig.Location.Localtime,
+		},
+		Current: WeatherCurrent{
+			LastUpdatedEpoch: orig.Current.LastUpdatedEpoch,
+			LastUpdated:      orig.Current.LastUpdated,
+			TempC:            orig.Current.TempC,
+			TempF:            orig.Current.TempF,
+			IsDay:            orig.Current.IsDay,
+
+			ConditionText: orig.Current.Condition.Text,
+			// ConditionIcon: orig.Current.Condition.Icon,
+			ConditionCode: orig.Current.Condition.Code,
+
+			WindMph:    orig.Current.WindMph,
+			WindKph:    orig.Current.WindKph,
+			WindDegree: orig.Current.WindDegree,
+			WindDir:    orig.Current.WindDir,
+
+			PressureMb: orig.Current.PressureMb,
+			PressureIn: orig.Current.PressureIn,
+			PrecipMm:   orig.Current.PrecipMm,
+			PrecipIn:   orig.Current.PrecipIn,
+
+			Humidity:   orig.Current.Humidity,
+			Cloud:      orig.Current.Cloud,
+			FeelsLikeC: orig.Current.FeelsLikeC,
+			FeelsLikeF: orig.Current.FeelsLikeF,
+			WindChillC: orig.Current.WindChillC,
+			WindChillF: orig.Current.WindChillF,
+			HeatIndexC: orig.Current.HeatIndexC,
+			HeatIndexF: orig.Current.HeatIndexF,
+			DewPointC:  orig.Current.DewPointC,
+			DewPointF:  orig.Current.DewPointF,
+
+			VisKm:    orig.Current.VisKm,
+			VisMiles: orig.Current.VisMiles,
+			UV:       orig.Current.UV,
+			GustMph:  orig.Current.GustMph,
+			GustKph:  orig.Current.GustKph,
+		},
 	}
 }
 
-func (f FetchData) CreateWeatherLabels() map[string]string {
+func WeatherLabels() map[string]string {
 	return map[string]string{
-
-		"Name":           "Name",
-		"Region":         "Region",
-		"Country":        "Country",
-		"Lat":            "Latitude",
-		"Lon":            "Longitude",
-		"TzID":           "Timezone ID",
-		"LocaltimeEpoch": "Local Epoch Time",
-		"Localtime":      "Local Time",
-
-		"LastUpdated": "Last Updated",
-		"TempC":       "Temperature (°C)",
-		"TempF":       "Temperature (°F)",
-		"IsDay":       "Daytime (1=Yes, 0=No)",
-		"WindMph":     "Wind (mph)",
-		"WindKph":     "Wind (kph)",
-		"WindDegree":  "Wind Direction (°)",
-		"WindDir":     "Wind Direction",
-		"PressureMb":  "Pressure (mb)",
-		"PressureIn":  "Pressure (in)",
-		"PrecipMm":    "Precipitation (mm)",
-		"PrecipIn":    "Precipitation (in)",
-		"Humidity":    "Humidity (%)",
-		"Cloud":       "Cloud Cover (%)",
-		"FeelsLikeC":  "Feels Like (°C)",
-		"FeelsLikeF":  "Feels Like (°F)",
-		"WindChillC":  "Wind Chill (°C)",
-		"WindChillF":  "Wind Chill (°F)",
-		"HeatIndexC":  "Heat Index (°C)",
-		"HeatIndexF":  "Heat Index (°F)",
-		"DewPointC":   "Dew Point (°C)",
-		"DewPointF":   "Dew Point (°F)",
-		"VisKm":       "Visibility (km)",
-		"VisMiles":    "Visibility (miles)",
-		"UV":          "UV Index",
-		"GustMph":     "Wind Gust (mph)",
-		"GustKph":     "Wind Gust (kph)",
+		"last_updated_epoch": "Last Updated (Epoch)",
+		"last_updated":       "Last Updated",
+		"temp_c":             "Temperature (°C)",
+		"temp_f":             "Temperature (°F)",
+		"feelslike_c":        "Feels Like (°C)",
+		"feelslike_f":        "Feels Like (°F)",
+		"humidity":           "Humidity (%)",
+		"wind_mph":           "Wind Speed (mph)",
+		"wind_kph":           "Wind Speed (kph)",
+		"wind_degree":        "Wind Direction (°)",
+		"wind_dir":           "Wind Direction",
+		"pressure_mb":        "Pressure (mb)",
+		"pressure_in":        "Pressure (inHg)",
+		"precip_mm":          "Precipitation (mm)",
+		"precip_in":          "Precipitation (in)",
+		"uv":                 "UV Index",
+		"gust_mph":           "Gust Speed (mph)",
+		"gust_kph":           "Gust Speed (kph)",
+		"condition_text":     "Condition Text",
+		// "condition_icon":     "Condition Icon",
+		"condition_code": "Condition Code",
+		"windchill_c":    "Wind Chill (°C)",
+		"windchill_f":    "Wind Chill (°F)",
+		"dewpoint_c":     "Dew Point (°C)",
+		"dewpoint_f":     "Dew Point (°F)",
+		"cloud":          "Cloud Cover (%)",
+		"vis_km":         "Visibility (km)",
+		"vis_miles":      "Visibility (miles)",
+		"is_day":         "Daytime Flag",
 	}
 }
 

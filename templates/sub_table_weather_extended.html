@@ -1,8 +1,6 @@
 {{range $key, $label := .Labels}}
-  <tr>
-    <td>{{$label}}</td>
-    <td>{{index $.Weather $key}}</td>
+<tr>
+  <td>{{$label}}</td>
+  <td>{{index $.Data $key}}</td>
 </tr>
 {{end}}
-
-

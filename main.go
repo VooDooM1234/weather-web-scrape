@@ -50,6 +50,11 @@ func main() {
 	http.Handle("/css/", http.StripPrefix("/css/", fs))
 
 	weatherData := DebugWeatherData()
+	flatWeather := fetch.FlattenWeather(&weatherData)
+
+	// weatherDataMap, _ := utils.StructToMap(weatherData)
+	currentDataMap, _ := utils.StructToMap(flatWeather.Current)
+	// locationDataMap, _ := utils.StructToMap(flatWeather.Location)
 
 	http.HandleFunc("/api/weather", func(w http.ResponseWriter, r *http.Request) {
 		ServeWeatherJSON(w, r, weatherData)
@@ -63,21 +68,28 @@ func main() {
 		w.Header().Set("Content-Type", "text/html")
 		tmpl := template.Must(template.ParseFiles("templates/index.html"))
 
-		tmpl.Execute(w, weatherData)
+		const defaultUnit = "metric"
+
+		view := fetch.WeatherView{
+			Data:     weatherData,
+			TempUnit: defaultUnit,
+		}
+
+		tmpl.Execute(w, view)
 	}
 
 	extendedDataTable := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		labels, _ := utils.StructToMap(fetch.FetchData{}.CreateWeatherLabels())
-		viewData, _ := utils.StructToMap(fetch.NewWeatherCurrentView(weatherData))
+
+		labels := fetch.WeatherLabels()
+
+		view := map[string]interface{}{
+			"Data":   currentDataMap, // Now all keys are top-level
+			"Labels": labels,
+		}
 
 		tmpl := template.Must(template.ParseFiles("templates/sub_table_weather_extended.html"))
-		if err := tmpl.Execute(w, map[string]interface{}{
-			"Weather": viewData,
-			"Labels":  labels,
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		tmpl.Execute(w, view)
 	}
 
 	setDataUnits := func(w http.ResponseWriter, r *http.Request) {
@@ -89,10 +101,13 @@ func main() {
 		unit := r.PostFormValue("unit")
 		log.Printf("HTMX POST received: %s", unit)
 
-		weatherData.TempUnit = unit // set the unit
+		view := fetch.WeatherView{
+			Data:     weatherData,
+			TempUnit: unit,
+		}
 
 		tmpl := template.Must(template.ParseFiles("templates/index.html"))
-		if err := tmpl.ExecuteTemplate(w, "dashboard-quick-grid", weatherData); err != nil {
+		if err := tmpl.ExecuteTemplate(w, "dashboard-quick-grid", view); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
