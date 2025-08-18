@@ -9,6 +9,25 @@
       transition: transform 0.2s;
     }
 
+#search-bar {
+  border: 1px solid #007bff;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 5px auto;
+  max-width: 700px;
+  overflow-y: auto;
+}
+
+
+#search-bar .search-input {
+  max-width: 650px !important;
+  margin: 0 auto !important;
+  /* border-radius: 8px !important;
+  border: 1px solid #007bff !important;
+  background-color: #f0f8ff !important; */
+}
+
+
     /* #dashboard-quick-grid .stat-box:hover {
       transform: translateY(-3px);
       box-shadow: 0 4px 10px rgba(0,0,0,0.15);

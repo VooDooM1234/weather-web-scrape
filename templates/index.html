@@ -51,19 +51,24 @@
 
       <!-- Search Locations -->
       <div class="position-relative">
-        <input
-          id="search-input"
-          class="form-control"
-          type="search"
-          name="search"
-          placeholder="Begin Typing To Search Locations..."
-          autocomplete="off"
-          hx-get="/weather/search/"
-          hx-trigger="input changed delay:1000ms"
-          hx-target="#search-dropdown"
-          hx-swap="innerHTML"
-          hx-indicator=".htmx-indicator"
-        />
+<div id="search-bar" class="search-bar">
+  <input
+    id="search-input"
+    class="form-control search-input"
+    type="search"
+    name="search"
+    placeholder="Begin Typing To Search Locations..."
+    autocomplete="off"
+    hx-get="/weather/search/"
+    hx-trigger="input changed delay:1000ms"
+    hx-target="#search-dropdown"
+    hx-swap="innerHTML"
+    hx-indicator=".htmx-indicator"
+    style="margin: auto; max-width: 700px;"
+  />
+</div>
+        </div>
+
         <!-- Search Result List -->
         {{define "search-result"}} {{range .}}
         <li
@@ -158,6 +163,7 @@
               </tr>
             </thead>
             <tbody
+              id="weather-table-body"
               hx-get="/weather/table/"
               hx-trigger="load"
               hx-target="this"
